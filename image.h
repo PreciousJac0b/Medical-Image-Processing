@@ -34,7 +34,8 @@ struct Image {
 
   Image& colorMask(float r, float g, float b); 
 
-  void applyNoiseFiltering(); // Applies median filter to reduce noise
+  // void applyNoiseFiltering(); // Applies median filter to reduce noise
+  Image applyNoiseFiltering() const;
 };
 
 void insertionSort(int arr[], int n);

@@ -8,6 +8,23 @@
 #include <sstream>
 #include <cstring>
 
+
+void insertionSort(int arr[], int n)
+{
+  int i, key, j;
+  for (i = 1; i < n; i++)
+  {
+    key = arr[i];
+    j = i - 1;
+    while (j >= 0 && arr[j] > key)
+    {
+      arr[j + 1] = arr[j];
+      j = j - 1;
+    }
+    arr[j + 1] = key;
+  }
+}
+
 Image::Image(const char *filename)
 {
   if (read(filename))
@@ -120,56 +137,94 @@ Image &Image::grayscale_lum()
   return *this;
 }
 
-Image &Image::colorMask(float r, float g, float b)
-{
-  if (channels < 3)
-  {
-    printf("\e[31m[ERROR] Color mask requires at least 3 channels but this image has %d channels\e[0m\n", channels);
-    for (int i = 0; i < size; i += channels)
-    {
+// Image &Image::colorMask(float r, float g, float b)
+// {
+//   if (channels < 3)
+//   {
+//     printf("\e[31m[ERROR] Color mask requires at least 3 channels but this image has %d channels\e[0m\n", channels);
+//     for (int i = 0; i < size; i += channels)
+//     {
+//     }
+//   }
+// }
+
+// void Image::applyNoiseFiltering()
+// {
+//   if (data == nullptr)
+//   {
+//     std::cerr << "Image data is null. Load an image first." << std::endl;
+//     return;
+//   }
+
+//   uint8_t *filteredData = new uint8_t[w * h * channels](); // New filtered image buffer
+//   int window[9];
+
+//   // Apply median filter
+//   for (int row = 1; row < h - 1; ++row)
+//   {
+//     for (int col = 1; col < w - 1; ++col)
+//     {
+//       for (int c = 0; c < channels; ++c)
+//       {
+//         // Populate the 3x3 window for the current pixel
+//         window[0] = data[((row - 1) * w + (col - 1)) * channels + c];
+//         window[1] = data[((row - 1) * w + col) * channels + c];
+//         window[2] = data[((row - 1) * w + (col + 1)) * channels + c];
+//         window[3] = data[(row * w + (col - 1)) * channels + c];
+//         window[4] = data[(row * w + col) * channels + c];
+//         window[5] = data[(row * w + (col + 1)) * channels + c];
+//         window[6] = data[((row + 1) * w + (col - 1)) * channels + c];
+//         window[7] = data[((row + 1) * w + col) * channels + c];
+//         window[8] = data[((row + 1) * w + (col + 1)) * channels + c];
+
+//         // Sort the window to find the median
+//         insertionSort(window, 9);
+
+//         // Assign the median value to the filtered data
+//         filteredData[(row * w + col) * channels + c] = window[4];
+//       }
+//     }
+//   }
+
+//   // Replace old data with the filtered data
+//   delete[] data;
+//   data = filteredData;
+// }
+
+Image Image::applyNoiseFiltering() const {
+    if (data == nullptr) {
+        std::cerr << "Image data is null. Load an image first." << std::endl;
+        return Image(0, 0, 0); // Return an empty image
     }
-  }
-}
 
-void Image::applyNoiseFiltering()
-{
-  if (data == nullptr)
-  {
-    std::cerr << "Image data is null. Load an image first." << std::endl;
-    return;
-  }
+    // Create a new image for the filtered data
+    Image filteredImage(w, h, channels);
+    uint8_t *filteredData = filteredImage.data; // Pointer to the new image's data
+    int window[9];
 
-  uint8_t *filteredData = new uint8_t[w * h * channels](); // New filtered image buffer
-  int window[9];
+    // Apply median filter
+    for (int row = 1; row < h - 1; ++row) {
+        for (int col = 1; col < w - 1; ++col) {
+            for (int c = 0; c < channels; ++c) {
+                // Populate the 3x3 window for the current pixel
+                window[0] = data[((row - 1) * w + (col - 1)) * channels + c];
+                window[1] = data[((row - 1) * w + col) * channels + c];
+                window[2] = data[((row - 1) * w + (col + 1)) * channels + c];
+                window[3] = data[(row * w + (col - 1)) * channels + c];
+                window[4] = data[(row * w + col) * channels + c];
+                window[5] = data[(row * w + (col + 1)) * channels + c];
+                window[6] = data[((row + 1) * w + (col - 1)) * channels + c];
+                window[7] = data[((row + 1) * w + col) * channels + c];
+                window[8] = data[((row + 1) * w + (col + 1)) * channels + c];
 
-  // Apply median filter
-  for (int row = 1; row < h - 1; ++row)
-  {
-    for (int col = 1; col < w - 1; ++col)
-    {
-      for (int c = 0; c < channels; ++c)
-      {
-        // Populate the 3x3 window for the current pixel
-        window[0] = data[((row - 1) * w + (col - 1)) * channels + c];
-        window[1] = data[((row - 1) * w + col) * channels + c];
-        window[2] = data[((row - 1) * w + (col + 1)) * channels + c];
-        window[3] = data[(row * w + (col - 1)) * channels + c];
-        window[4] = data[(row * w + col) * channels + c];
-        window[5] = data[(row * w + (col + 1)) * channels + c];
-        window[6] = data[((row + 1) * w + (col - 1)) * channels + c];
-        window[7] = data[((row + 1) * w + col) * channels + c];
-        window[8] = data[((row + 1) * w + (col + 1)) * channels + c];
+                // Sort the window to find the median
+                insertionSort(window, 9);
 
-        // Sort the window to find the median
-        insertionSort(window, 9);
-
-        // Assign the median value to the filtered data
-        filteredData[(row * w + col) * channels + c] = window[4];
-      }
+                // Assign the median value to the filtered data
+                filteredData[(row * w + col) * channels + c] = window[4];
+            }
+        }
     }
-  }
 
-  // Replace old data with the filtered data
-  delete[] data;
-  data = filteredData;
+    return filteredImage;
 }
