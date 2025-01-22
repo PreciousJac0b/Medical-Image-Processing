@@ -21,9 +21,8 @@ int main(int argc, char *argv[])
       gray_lum.write("gray_lum.png");
       return 0;
     }
-    else if (std::strcmp(argv[i], "test") == 0)
+    else if (std::strcmp(argv[i], "copy") == 0)
     {
-      printf("Got called!");
       Image test("test1.jpg");
       test.write("new.png");
 
@@ -47,7 +46,6 @@ int main(int argc, char *argv[])
     }
     else if (std::strcmp(argv[i], "noisefilter") == 0)
     {
-      printf("Got called!");
       Image img("test1.jpg");
       if (!img.read("test1.jpg"))
       {
@@ -63,7 +61,6 @@ int main(int argc, char *argv[])
         std::cerr << "Failed to save filtered_image.jpg" << std::endl;
         return -1;
       }
-      printf("Got called again!");
       std::cout << "Filtered image saved as filtered_image.jpg" << std::endl;
       return 0;
     }
