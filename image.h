@@ -7,6 +7,8 @@
 #include <cstdint>
 #include <cstddef>
 
+//It contains declaration of all functions the package is going to use.
+
 // Setting up an image type.
 enum ImageType {
   PNG, JPG, BMP, TGA
@@ -32,7 +34,14 @@ struct Image {
   Image& grayscale_avg();
   Image& grayscale_lum();
 
-  Image& colorMask(float r, float g, float b); 
+  Image& colorMask(float r, float g, float b);
+
+  // Cropping Images
+  Image& crop(uint16_t cx, uint16_t cy, uint16_t cw, uint16_t ch);
+
+  // Steganography
+  Image& encodeMessage(const char* message); 
+  Image& decodeMessage(char* buffer, size_t* messageLength); 
 
   // void applyNoiseFiltering(); // Applies median filter to reduce noise
   Image applyNoiseFiltering() const;

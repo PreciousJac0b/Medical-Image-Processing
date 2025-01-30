@@ -8,7 +8,6 @@
 #include <sstream>
 #include <cstring>
 
-
 void insertionSort(int arr[], int n)
 {
   int i, key, j;
@@ -137,16 +136,32 @@ Image &Image::grayscale_lum()
   return *this;
 }
 
-// Image &Image::colorMask(float r, float g, float b)
-// {
-//   if (channels < 3)
-//   {
-//     printf("\e[31m[ERROR] Color mask requires at least 3 channels but this image has %d channels\e[0m\n", channels);
-//     for (int i = 0; i < size; i += channels)
-//     {
-//     }
-//   }
-// }
+Image &Image::colorMask(float r, float g, float b)
+{
+  if (channels < 3)
+  {
+    printf("\e[31m[ERROR] Color mask requires at least 3 channels but this image has %d channels\e[0m\n", channels);
+  }
+  else
+  {
+    for (int i = 0; i < size; i += channels)
+    {
+      data[i] *= r;
+      data[i + 1] *= g;
+      data[i + 2] *= b;
+    }
+  }
+  return *this;
+}
+
+Image &Image::encodeMessage(const char *message)
+{
+  return *this;
+}
+Image &Image::decodeMessage(char *buffer, size_t *messageLength)
+{
+  return *this;
+}
 
 // void Image::applyNoiseFiltering()
 // {
@@ -191,40 +206,77 @@ Image &Image::grayscale_lum()
 //   data = filteredData;
 // }
 
-Image Image::applyNoiseFiltering() const {
-    if (data == nullptr) {
-        std::cerr << "Image data is null. Load an image first." << std::endl;
-        return Image(0, 0, 0); // Return an empty image
+Image Image::applyNoiseFiltering() const
+{
+  if (data == nullptr)
+  {
+    std::cerr << "Image data is null. Load an image first." << std::endl;
+    return Image(0, 0, 0); // Return an empty image
+  }
+
+  // Create a new image for the filtered data
+  Image filteredImage(w, h, channels);
+  uint8_t *filteredData = filteredImage.data; // Pointer to the new image's data
+  int window[9];
+
+  // Apply median filter
+  for (int row = 3; row < h - 3; ++row)
+  {
+    for (int col = 3; col < w - 3; ++col)
+    {
+      for (int c = 0; c < channels; ++c)
+      {
+        // Populate the 3x3 window for the current pixel
+        window[0] = data[((row - 1) * w + (col - 1)) * channels + c];
+        window[1] = data[((row - 1) * w + col) * channels + c];
+        window[2] = data[((row - 1) * w + (col + 1)) * channels + c];
+        window[3] = data[(row * w + (col - 1)) * channels + c];
+        window[4] = data[(row * w + col) * channels + c];
+        window[5] = data[(row * w + (col + 1)) * channels + c];
+        window[6] = data[((row + 1) * w + (col - 1)) * channels + c];
+        window[7] = data[((row + 1) * w + col) * channels + c];
+        window[8] = data[((row + 1) * w + (col + 1)) * channels + c];
+
+        // Sort the window to find the median
+        insertionSort(window, 9);
+
+        // Assign the median value to the filtered data
+        filteredData[(row * w + col) * channels + c] = window[4];
+      }
     }
+  }
 
-    // Create a new image for the filtered data
-    Image filteredImage(w, h, channels);
-    uint8_t *filteredData = filteredImage.data; // Pointer to the new image's data
-    int window[9];
+  return filteredImage;
+}
 
-    // Apply median filter
-    for (int row = 1; row < h - 1; ++row) {
-        for (int col = 1; col < w - 1; ++col) {
-            for (int c = 0; c < channels; ++c) {
-                // Populate the 3x3 window for the current pixel
-                window[0] = data[((row - 1) * w + (col - 1)) * channels + c];
-                window[1] = data[((row - 1) * w + col) * channels + c];
-                window[2] = data[((row - 1) * w + (col + 1)) * channels + c];
-                window[3] = data[(row * w + (col - 1)) * channels + c];
-                window[4] = data[(row * w + col) * channels + c];
-                window[5] = data[(row * w + (col + 1)) * channels + c];
-                window[6] = data[((row + 1) * w + (col - 1)) * channels + c];
-                window[7] = data[((row + 1) * w + col) * channels + c];
-                window[8] = data[((row + 1) * w + (col + 1)) * channels + c];
+Image &Image::crop(uint16_t cx, uint16_t cy, uint16_t cw, uint16_t ch)
+/*
+Args
+  cx => x start coordinate
+  cy => y start coordinate
+  cw => Width of the image to be cropped out. (End x coordinate)
+  ch => height of the image to be cropped out. (End y coordinate)
+*/
+{
+  size = cw * ch * channels; // Size of 1d array required
+  uint8_t* croppedImage = new uint8_t[size]; // Defined 1d array for efficient image processing.
 
-                // Sort the window to find the median
-                insertionSort(window, 9);
+  memset(croppedImage, 0, size); // Set all pixel color to black. 
 
-                // Assign the median value to the filtered data
-                filteredData[(row * w + col) * channels + c] = window[4];
-            }
-        }
+  for(uint16_t y = 0; y < ch; ++y) {
+    if (y + cy >= h) {break;} // Avoids going beyong image boundary and encountering segfault.
+    for(uint16_t x = 0; x < cw; ++x) {
+      if (x + cx >= w) {break;} // Avoids going beyong image boundary and encountering segfault.
+      memcpy(&croppedImage[(x + y * cw) * channels], &data[(x + cx + (y + cy) * w) * channels], channels); // Copy pixel values from data array to cropped image array.
     }
+  }
 
-    return filteredImage;
+  w = cw;
+  h = ch;
+  size = w * h * channels;
+
+  delete[] data;
+  data = croppedImage;
+  croppedImage = nullptr;
+  return *this;
 }
